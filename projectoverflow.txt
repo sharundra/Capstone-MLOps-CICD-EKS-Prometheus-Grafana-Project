@@ -1,0 +1,7 @@
+--------------------------Setting Up project structure--------------------------
+1. Create repo in remote and then clone it in local
+2. Create a virtual environement -- conda create -n <venv name> python=3.10
+    a. Activate the virtual environment -- conda activate <venv name>
+3. pip install cookiecutter
+4. Run this command to scaffold project structure  -- cookiecutter -c v1 https://github.com/drivendata/cookiecutter-data-science
+
