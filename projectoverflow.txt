@@ -4,4 +4,12 @@
     a. Activate the virtual environment -- conda activate <venv name>
 3. pip install cookiecutter
 4. Run this command to scaffold project structure  -- cookiecutter -c v1 https://github.com/drivendata/cookiecutter-data-science
+5. Copy the contents of newly created folder(by cookiecutter) into root folder and delete the empty cookiecutter folder.
+6. Rename src.models -> src.model
 
+--------------------------  Setup MLFlow on Dagshub------------------------------
+7. Go to https://dagshub.com/dashboard and connect a git repo to dagshub -- Connect -> new repo -> connect a repo -> only selected repos -> select a repo -> save -> connect the repo
+8. Copy experiment tracking URL and code snippet given there (can try MLFlow UI)
+9. pip install dagshub and mlflow
+
+10. Run experiment notebooks
