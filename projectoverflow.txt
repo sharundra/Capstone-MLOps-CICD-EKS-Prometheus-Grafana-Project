@@ -13,3 +13,4 @@
 9. pip install dagshub and mlflow
 
 10. Run experiment notebooks
+11. git add -> commit -> push
