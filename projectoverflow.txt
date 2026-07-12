@@ -14,3 +14,20 @@
 
 10. Run experiment notebooks
 11. git add -> commit -> push
+
+12. For data versioning -- dvc init 
+13. Create a local folder for temprory work as 'local_s3'
+14. Run this command -- dvc remote add -d mylocal local_s3
+
+15. Add code to below files/folders inside src dir --
+    a. logger
+    b. data/data_ingestion.py :
+        i.  run and test it using direct link for data access -- train and test data should appear in data/raw folder.
+        ii. then bring "connections" folder inside src and enable s3 data access in data_ingestion.py (using boto3) and run it to verify if s3 connection works properly.
+        iii. Once s3 connection testing done, revert back to direct data link for data acccess and remove aws credentials from the code.
+    c. data_preprocessing.py
+    d. feature_engineering.py
+    e. model_building.py
+    f. model_evaluation.py
+    g. register_model.py
+
