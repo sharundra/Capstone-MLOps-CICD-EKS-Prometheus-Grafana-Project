@@ -72,3 +72,18 @@
     a. Update ci.yaml for model testing, promotion to production and flask app testing.
     b. git add, commit and push and follow github actions for ci pipeline.
 
+
+----------------------------------  Moving to Docker  -------------------------------------
+26. Generate one optimized requirements.txt inside folder flask_app
+    a. "pip install pireqs"
+    b. "cd flask app" then run "pipreqs . --force" -- It does this, in the current folder (.) scan all the python import statements and generate requirements.txt
+27. Add Dockerfile and start docker-desktop in background 
+28. Run the command from the root directory -- "docker build -t capstone-project-app:latest ."
+    a. Run "docker run -p 8888:5001 -e CAPSTONE_TEST=<generated dagshub token> capstone-project-app:latest" -- To tackle dagshub authentication iussue, we are using porduction grade code and passing the token while running the docker image.
+
+29. If not done already (because we have done, using command, "aws configure"), set up AWS services for below variables --
+    a. AWS_ACCOUNT_ID (click on root id name in a small tab in top right, copy account id from there); AWS_ACCESS_KEY_ID; AWS_SECRET_ACCESS_KEY; AWS_REGION; ECR_REPOSITORY
+    b. Once AWS setup is done, add these variables and their values in github actions' settings/secrets and variables/actions
+    c. Also, add this permission to the IAM user: AmazonEC2ContainerRegistryFullAccess -- IAM -> IAM users -> select correct user -> add permissions -> attach policies directly -> select policy name -> next -> done.
+
+30. Execute the pipeline till the stage where we build and push the image to ECR
