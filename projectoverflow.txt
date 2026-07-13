@@ -6,6 +6,7 @@
 4. Run this command to scaffold project structure  -- cookiecutter -c v1 https://github.com/drivendata/cookiecutter-data-science
 5. Copy the contents of newly created folder(by cookiecutter) into root folder and delete the empty cookiecutter folder.
 6. Rename src.models -> src.model
+    a. Also, bring the correct requirements.txt and run, "pip install -r requirements.txt"
 
 --------------------------  Setup MLFlow on Dagshub------------------------------
 7. Go to https://dagshub.com/dashboard and connect a git repo to dagshub -- Connect -> new repo -> connect a repo -> only selected repos -> select a repo -> save -> connect the repo
@@ -19,15 +20,46 @@
 13. Create a local folder for temprory work as 'local_s3'
 14. Run this command -- dvc remote add -d mylocal local_s3
 
+--------------------------  Pipeline training and versioning ------------------------------
 15. Add code to below files/folders inside src dir --
     a. logger
     b. data/data_ingestion.py :
         i.  run and test it using direct link for data access -- train and test data should appear in data/raw folder.
         ii. then bring "connections" folder inside src and enable s3 data access in data_ingestion.py (using boto3) and run it to verify if s3 connection works properly.
         iii. Once s3 connection testing done, revert back to direct data link for data acccess and remove aws credentials from the code.
-    c. data_preprocessing.py
-    d. feature_engineering.py
-    e. model_building.py
-    f. model_evaluation.py
-    g. register_model.py
+    c. data/data_preprocessing.py -- run it and then it should save preprocessed data into data/interim folder.
+    d. features/feature_engineering.py -- run it and vectorzed data should go to data/processed folder and also vectorizer pickle model should be saved into "models" folder.
+    e. model/model_building.py -- run it and model.pkl should be saved at "models" folder 
+    f. model/model_evaluation.py :
+        i. comment out the product code piece and uncomment local run piece. Give the correct ml_tracking_uri and then correct repo_owner and repo_name for dagshub_init and then run the code. "metrics.json" would be saved inside "reports" folder. Go to newest experiment in mlflow UI to track this run there. 
+    g. model/register_model.py :
+        i. again comment out production connection code piece and uncomment local dagshub connection piece. Then run and version 1 of model gets registered in MLflow.
+        ii. TO register version 2 of the model also in MLflow -- Change some hyperparameter in model_building.py and again run model_building.py -> model_evaluation.py -> register_model.py
+
+16. Add dvc.yaml file which should contain stages/instructions till model_registration
+    a. This yaml file is to automate the pipeline from data ingestion till model registration.
+17. Add params.yaml file --> to aggregate all the parameters from all the scripts here only.
+    a. Uncomment the params.yaml related parts in scripts to access parameter values from param.yaml (here data_ingestion.py and feature_engineering.py)
+    b. We are adding this params.yaml now because dvc.yaml talks about commands, dependencies, params and outputs for each stage(data ingestion, data preprocessing, model building etc.).
+
+18. Now dvc pipeline is ready to run :
+    a. run "dvc repro" --> It will run the entire pipeline till model registration and would save version 3 of model in MLflow.
+
+19. Check/delete existing local dvc remote :
+    a. dvc remote list 
+    b. dvc remote remove <name_of_remote>
+20. Set aws credentials --> run "aws configure" and put aws access key id and secret access key
+21. Add s3 bucket as dvc remote storage :
+    a. run "dvc remote add -d myremote s3://<bucket-name>" -- we can cross-check if it was run successfully at .dvc/config, where s3 url would show up now.
+22. Push data to s3 bucket :
+    a. dvc status -- will be up to date as we have already run "dvc repro"
+    b. dvc commit
+    c. dvc push
+    d. change one of the parameters in params.yaml --> run "dvc status" as it will show changes status --> run "dvc repro" and new version 4 of model will be regsitered in MLflow registry --> again repeat "dvc status" which will be up to date now then "dvc commit" then "dvc push"
+
+----------------------------------  CICD pipeline  -------------------------------------
+23. Bring the new folder, flask_app and have relevant files and folders inside it.
+    a. Inside the app.py, comment production code piece and use local use code piece and then run this file --> python flask_app/app.py (make sure stage is "staging" and not "production" for now) -- latest model will get served from MLflow to here and for any new text, prediction will be rendered on the UI runnning on port localhost:5001
+    b. app.py has 3 routes, /, predict and metrics so once app is live on localhost, check all 3 routes
+24. Add .gihub/workflows/ci.yaml file
 
