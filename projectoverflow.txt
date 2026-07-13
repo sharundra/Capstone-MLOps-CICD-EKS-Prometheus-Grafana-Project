@@ -64,4 +64,6 @@
 24. Add .gihub/workflows/ci.yaml file 
     a. Generate one authentication token from dagshub -- Your Settings --> Tokens --> Generate new Tokens
     b. Put that dagshub toekn in github secrets -- settings --> secrets and variables --> actions 
+    c. Update the scripts to use production code wherever local code for dagshub/mlflow access was being used.
+    d. Git add, commit and push again and check the CI progress in github actions 
 
