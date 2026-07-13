@@ -66,4 +66,9 @@
     b. Put that dagshub toekn in github secrets -- settings --> secrets and variables --> actions 
     c. Update the scripts to use production code wherever local code for dagshub/mlflow access was being used.
     d. Git add, commit and push again and check the CI progress in github actions 
+    e. After successful run of CI pipeline in Github actions, again it can be sone, dvc status, dvc commit and dvc push.
+
+25. Bring scripts and tests folder. Update the production code related dagshub variables.
+    a. Update ci.yaml for model testing, promotion to production and flask app testing.
+    b. git add, commit and push and follow github actions for ci pipeline.
 
