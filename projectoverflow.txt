@@ -61,5 +61,7 @@
 23. Bring the new folder, flask_app and have relevant files and folders inside it.
     a. Inside the app.py, comment production code piece and use local use code piece and then run this file --> python flask_app/app.py (make sure stage is "staging" and not "production" for now) -- latest model will get served from MLflow to here and for any new text, prediction will be rendered on the UI runnning on port localhost:5001
     b. app.py has 3 routes, /, predict and metrics so once app is live on localhost, check all 3 routes
-24. Add .gihub/workflows/ci.yaml file
+24. Add .gihub/workflows/ci.yaml file 
+    a. Generate one authentication token from dagshub -- Your Settings --> Tokens --> Generate new Tokens
+    b. Put that dagshub toekn in github secrets -- settings --> secrets and variables --> actions 
 
