@@ -17,6 +17,7 @@ spec:
       containers:
       - name: flask-app
         image: 020866158197.dkr.ecr.us-east-1.amazonaws.com/capstone-docker-repo:latest
+        imagePullPolicy: Always
         ports:
         - containerPort: 5001
         resources:
