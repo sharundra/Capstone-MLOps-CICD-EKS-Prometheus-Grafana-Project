@@ -73,7 +73,7 @@
     b. git add, commit and push and follow github actions for ci pipeline.
 
 
-----------------------------------  Moving to Docker  -------------------------------------
+----------------------------------  Moving to Docker and EKS  -------------------------------------
 26. Generate one optimized requirements.txt inside folder flask_app
     a. "pip install pireqs"
     b. "cd flask app" then run "pipreqs . --force" -- It does this, in the current folder (.) scan all the python import statements and generate requirements.txt
@@ -85,5 +85,31 @@
     a. AWS_ACCOUNT_ID (click on root id name in a small tab in top right, copy account id from there); AWS_ACCESS_KEY_ID; AWS_SECRET_ACCESS_KEY; AWS_REGION; ECR_REPOSITORY
     b. Once AWS setup is done, add these variables and their values in github actions' settings/secrets and variables/actions
     c. Also, add this permission to the IAM user: AmazonEC2ContainerRegistryFullAccess -- IAM -> IAM users -> select correct user -> add permissions -> attach policies directly -> select policy name -> next -> done.
+30. Execute the pipeline till the stage where we build and push the image to ECR.
 
-30. Execute the pipeline till the stage where we build and push the image to ECR
+
+31. Setup required before moving to EKS deployment --
+    a. Verify AWS CLI using this command --> aws --version 
+    b. Verify kubectl using this command --> kubectl version --client
+    c. verify eksctl using this command --> eksctl version 
+        i. All three mentioned above can be very easily installed on mac using brew commands, i.e., "brew install awscli", "brew install kubectl", "brew install eksctl".
+    d. Now since awscli and eksctl are installed and "aws configure" command has already run, confirm if the setup is correct without actually spending money on a cluster by running below command:
+        i. run "eksctl get clusters" --> if it returns "No clusters found" that means setup is good. 
+32. Create a cluster on EKS using this command --> "eksctl create cluster --name flask-app-cluster --region us-east-1 --nodegroup-name flask-app-nodes --node-type t3.small --nodes 1 --nodes-min 1 --nodes-max 1 --managed"
+33. Update kubectl Config. Once the cluster is created, eksctl will automatically update our kubectl config file. However, we can verify and set it manually using the commnad :
+    a. "aws eks --region us-east-1 update-kubeconfig --name flask-app-cluster" --> This ensures that our kubectl is pointing to the correct cluster.
+34. Check EKS cluster configuration. Run this command, "aws eks list-clusters" and ensure we can access the eks cluster.
+    a. Optional command to delete the cluster --> "eksctl delete cluster --name flask-app-cluster --region us-east-1"
+    b. Then verify the deletion --> "eksctl get cluster --region us-east-1"
+35. Verify the cluster status :
+    a. Run the command, "aws eks --region us-east-1 describe-cluster --name flask-app-cluster --query "cluster.status""
+36. Check if kubectl has connectivity with cluster nodes --> run this command, "kubectl get nodes"
+37. Check the namespaces --> "kubectl get namespaces"
+38. Verify our deployment (if there are any) --> "kubectl get pods" then to check services, run "kubectl get svc"
+39. Deploy the app on EKS via CICD pipeline :
+    a. Edit ci.yaml, deployment.yaml, Dockerfile
+    # Read a little about AWS CloudFormation service and how it is related to EKS -- When we run commands to create an EKS cluster, CloudFormation creates a stack in the backgroud regarding what all is required to create a cluster and does the required job in the background (like creating an EC2 instance in the background which we can verify on CloudFormation and EC2). 
+        i. In case if cluster is down in future for some reason, this stack helps AWS bring back cluster back to action again.
+    b. Now edit the security group for nodes and edit inbound rule for 5001 port
+        i. So as one Ec2 insance/node is already created by CloudFormation in the background as per the given command, go to that instance -> instance id -> security -> security groups -> Inbound rules -> edit inbound rules -> add rule (port range as 5001 and source as "anywhere IPv4") -> Save.
+    c. Now do git add, commit and push to trigger cicd for eks deployment.
