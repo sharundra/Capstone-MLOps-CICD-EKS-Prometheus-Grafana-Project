@@ -108,6 +108,9 @@
 38. Verify our deployment (if there are any) --> "kubectl get pods" then to check services, run "kubectl get svc"
 39. Deploy the app on EKS via CICD pipeline :
     a. Edit ci.yaml, deployment.yaml, Dockerfile
+        i. for deployment.yaml. make sure correct ecr path is mentioned which includes account-id and ecr repo name. Make sure correct port values are mentioned.
+        ii. For ci.yaml, make sure all steps are mentioned till deployment to eks.
+        iii. For Dockerfile, make sure production command is uncommented and local command is commented out.
     # Read a little about AWS CloudFormation service and how it is related to EKS -- When we run commands to create an EKS cluster, CloudFormation creates a stack in the backgroud regarding what all is required to create a cluster and does the required job in the background (like creating an EC2 instance in the background which we can verify on CloudFormation and EC2). 
         i. In case if cluster is down in future for some reason, this stack helps AWS bring back cluster back to action again.
     b. Now edit the security group for nodes and edit inbound rule for 5001 port
@@ -115,4 +118,54 @@
     c. Now do git add, commit and push to trigger cicd for eks deployment.
 40. Once the deployment is successful, 
     a. Verify the deployment, run "kubectl get pods" and we should get STATUS as RUNNING.
-    b. get the load balancer URL --> "kubectl get svc flask-app-service"
+    b. get the load balancer URL --> "kubectl get svc flask-app-service" --> get the externam-ip and paste it in browser on port 5001 (<external-ip>:5001) --> should be able to access the app there.
+
+
+----------------------------------  Promtheus Server Setup  -------------------------------------
+41. Launch an EC2 instance for prometheus setup with these configurations :
+    a. OS - Ubuntu; AMI - ubuntu server 26.04 ssd free tier; architecture - 64 bit(x86); instance type - t3.medium or t3.small; create one key(optional as not needed here); allow ssh, allow https, allow http traffic from the internet; configure storage - 20 gb disk space.
+42. Go to newly created ec2 instance and click on connect :
+    a. Once terminal opens, run this to update packages -- "sudo apt update && sudo apt upgrade -y"
+43. Download prometheus on prometheus server (EC2 instance) through its terminal :
+    a. Run this -- "wget https://github.com/prometheus/prometheus/releases/download/v2.46.0/prometheus-2.46.0.linux-amd64.tar.gz"
+    b. run this to unip the package isntalled above -- "tar -xvzf prometheus-2.46.0.linux-amd64.tar.gz"
+    c. Move relevant files into a folder named prometheus -- "mv prometheus-2.46.0.linux-amd64 prometheus"
+44. Move files/folders to standard paths - "sudo mv prometheus /etc/prometheus" and then this, "sudo mv /etc/prometheus/prometheus /usr/local/bin/"
+45. Create Prometheus configuration :
+    a. Open this file for editing - "sudo nano /etc/prometheus/prometheus.yml"
+    b. Edit this file, 
+        i. global -> scrape_interval : 15s (should be already present by default)
+        ii. At the bottom of file matching indentation with key just above, put this -- scrape_configs -> job_name: "flask_app"; static_configs -> targets: ["<your-flask-app-loadbalancer-external-ip>:5001"]
+        iii. Save the file - ctrl+o then Enter then ctrl+x
+        iv. confirm the change - "cat /etc/prometheus/prometheus.yml"
+46. Locate the Prometheus binary (run the following command to find where the prometheus executable is installed) :
+    a.  "which prometheus" -- this should return full path to the prometheus binary like /usr/local/bin/prometheus
+47. Run prometheus with the config file - "/usr/local/bin/prometheus --config.file=/etc/prometheus/prometheus.yml"
+48. Add port to inbound rules for Prometheus server ec2 instance - prometheus server instance -> security -> security groups -> edit inbound rules -> port range to be 9090 and access from anywhere IPv4 -> save rules.
+    a. copy public IP address from instance and open in browser -> <IP-address>:9090 
+
+
+----------------------------------  Grafana Server Setup  -------------------------------------
+49. Launch an Ubuntu EC2 Instance for Grafana: t3.small,  20GB of disk space (general-purpose SSD), Security Group: Allow inbound access on ports: 3000 for Grafana Web UI, 22 for SSH access
+    a. Add port to inbound rules too like previously we did.
+50. Go to newly created ec2 instance of grafana-server and click on connect :
+    a. Once terminal opens, run this to update packages -- "sudo apt update && sudo apt upgrade -y"
+51. Download Grafana - wget https://dl.grafana.com/grafana/release/13.1.0/grafana_13.1.0_28013217238_linux_amd64.deb (get the stable version)
+    a. Install it -- "sudo apt install ./grafana_13.1.0_28013217238_linux_amd64.deb"
+    b. Start grafana service -- "sudo systemctl start grafana-server"
+    c. Enable grafana to start on each boot -- "sudo systemctl enable grafana-server"
+    d. Verify the service is running -- "sudo systemctl status grafana-server"
+52. Open grafana web ui -- http://<ec2 grafana server-public-ip>:3000
+53. Add prometheus as a data source : on grafana ui, go to connections -> data sources -> add data source -> prometheus -> add this, "http://<prometheus server public ip>:9090" to prmentheus server url box -> save & test
+
+----------------------------------  AWS resources cleanup  -------------------------------------
+54. Stop running instances of prometheus and grafana from console.
+    a. Few minutes later, terminate these both instances.
+55. Delete deployment -- "kubectl delete deployment flask-app"
+56. Delete service which we used to access the app -- "kubectl delete service flask-app-service"
+57. Delete env var -- "kubectl delete secret capstone-secret"
+58. Delete EKS cluster - "eksctl delete cluster --name <cluster-name> --region <aws region>"
+    a. Few minutes later when the above command completes, verify cluster deletion -- "eksctl get cluster --region us-east-1"
+59. On ECR, delete the docker image
+60. On S3 first empty the bucket then delete the bucket.
+61. It can be checked manually on AWS CloudFormation where cluster should not appear.
